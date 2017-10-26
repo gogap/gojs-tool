@@ -19,7 +19,9 @@ type Module interface {
 }
 
 type TemplateVars struct {
-	PackageName    string
-	PackagePath    string
-	PackageObjects map[string]string
+	PackageName  string
+	PackagePath  string
+	PackageVars  map[string]string
+	PackageTypes map[string]string
+	PackageFuncs map[string]string
 }

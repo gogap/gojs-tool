@@ -3,10 +3,10 @@ package gojs
 import (
 	"bytes"
 	"go/format"
+	"text/template"
 
 	"github.com/gogap/gocoder"
-	"github.com/xujinzheng/gojs-tool/gojs/templates"
-	"text/template"
+	"github.com/gogap/gojs-tool/gojs/templates"
 )
 
 func Parser(pkgPath string, gopath string) (vars *TemplateVars, err error) {
@@ -19,9 +19,11 @@ func Parser(pkgPath string, gopath string) (vars *TemplateVars, err error) {
 	}
 
 	tmplVars := &TemplateVars{
-		PackageName:    pkg.Name(),
-		PackagePath:    pkg.Path(),
-		PackageObjects: make(map[string]string),
+		PackageName:  pkg.Name(),
+		PackagePath:  pkg.Path(),
+		PackageFuncs: make(map[string]string),
+		PackageTypes: make(map[string]string),
+		PackageVars:  make(map[string]string),
 	}
 
 	numFuncs := pkg.NumFuncs()
@@ -37,7 +39,7 @@ func Parser(pkgPath string, gopath string) (vars *TemplateVars, err error) {
 			continue
 		}
 
-		tmplVars.PackageObjects[goFunc.Name()] = goFunc.Name()
+		tmplVars.PackageFuncs[goFunc.Name()] = goFunc.Name()
 	}
 
 	numVars := pkg.NumVars()
@@ -49,7 +51,19 @@ func Parser(pkgPath string, gopath string) (vars *TemplateVars, err error) {
 			continue
 		}
 
-		tmplVars.PackageObjects[goVar.Name()] = goVar.Name()
+		tmplVars.PackageVars[goVar.Name()] = goVar.Name()
+	}
+
+	numTypes := pkg.NumTypes()
+
+	for i := 0; i < numTypes; i++ {
+		goType := pkg.Type(i)
+
+		if !isExported(goType.Name()) {
+			continue
+		}
+
+		tmplVars.PackageTypes[goType.Name()] = goType.Name()
 	}
 
 	vars = tmplVars
@@ -57,13 +71,18 @@ func Parser(pkgPath string, gopath string) (vars *TemplateVars, err error) {
 	return
 }
 
-func GenerateGojaModule(pkgPath string, gopath string) (code string, err error) {
+func GenerateCode(tmplName, pkgPath, pkgAlias, gopath string) (code string, err error) {
 	vars, err := Parser(pkgPath, gopath)
 	if err != nil {
 		return
 	}
 
-	tmpl, err := template.New("Goja").Parse(templates.Goja)
+	tmplBytes, err := templates.Asset(tmplName + ".tmpl")
+	if err != nil {
+		return
+	}
+
+	tmpl, err := template.New("Goja").Parse(string(tmplBytes))
 	if err != nil {
 		return
 	}
@@ -73,6 +92,10 @@ func GenerateGojaModule(pkgPath string, gopath string) (code string, err error) 
 
 	if err != nil {
 		return
+	}
+
+	if len(pkgAlias) > 0 {
+		vars.PackageName = pkgAlias
 	}
 
 	codeBytes, err := format.Source(buf.Bytes())
