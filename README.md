@@ -5,8 +5,28 @@ A tool for export package funcs, types, vars for VM (like goja) to use
 ### Install
 
 ```
-go get github.com/gogap/gojs-tool
+go get -u -v github.com/gogap/gojs-tool
 ```
+
+
+### Command
+
+```bash
+> gojs-tool gen --help
+ 
+NAME:
+   gojs-tool gen - generate modules
+
+USAGE:
+   gojs-tool gen [command options] packages
+
+OPTIONS:
+   --template value, -t value  template filename in templates folder without extension (default: "goja")
+   --recusive, -r              recusive generate code
+   --namespace, -n             generate submodules loader, access object by dot, only work while recusive enabled
+   --gopath value              the package in which GOPATH [$GOPATH]
+```
+
 
 ### Example
 
@@ -14,7 +34,7 @@ go get github.com/gogap/gojs-tool
 example> pwd
 github.com/xujinzheng/playgo/example
 
-example> gojs-tool gen -r github.com/sirupsen/logrus
+example> gojs-tool gen -r -n github.com/sirupsen/logrus
 
 example> tree modules
 modules
@@ -22,6 +42,7 @@ modules
     └── sirupsen
         └── logrus
             ├── hooks
+            │   ├── hooks.go
             │   ├── syslog
             │   │   └── syslog.go
             │   └── test
@@ -106,9 +127,15 @@ func Enable(runtime *goja.Runtime) {
 #### Use logurs in goja
 
 ```go
+
 package main
 
 import (
+	"fmt"
+)
+
+import (
+	"github.com/xujinzheng/playgo/example/modules/github.com/denverdino/aliyungo"
 	"github.com/xujinzheng/playgo/example/modules/github.com/sirupsen/logrus"
 )
 
@@ -118,21 +145,29 @@ import (
 )
 
 func main() {
+
 	registry := new(require.Registry)
 
 	runtime := goja.New()
 
 	registry.Enable(runtime)
 	logrus.Enable(runtime)
+	aliyungo.Enable(runtime)
 
 	_, err := runtime.RunString(`
 		var entryA = logrus.NewEntry()
 		var entryB = logrus.Entry()
-
+		
 		logrus.Println("entryA:",entryA)
 		logrus.Println("entryB:",entryB)
-
+    	
     	logrus.WithField("Hello", "World").Println("I am gojs")
+
+    	// gojs-tool gen --recusive --namespace github.com/denverdino/aliyungo
+    	// wrapper packages in namespace, access by dot
+    	var client = aliyungo.cs.NewClient() 
+
+    	logrus.Println("client", client)
     `)
 
 	if err != nil {
@@ -140,6 +175,7 @@ func main() {
 		return
 	}
 }
+
 
 ```
 
@@ -149,4 +185,5 @@ example> go run main.go
 INFO[0000] entryA: &{<nil> map[] 0001-01-01 00:00:00 +0000 UTC panic  <nil>}
 INFO[0000] entryB: {<nil> map[] 0001-01-01 00:00:00 +0000 UTC panic  <nil>}
 INFO[0000] I am gojs                                     Hello=World
+INFO[0000] client &{  https://cs.aliyuncs.com 2015-12-15 false  0xc420399e60}
 ```

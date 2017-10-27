@@ -24,4 +24,6 @@ type TemplateVars struct {
 	PackageVars  map[string]string
 	PackageTypes map[string]string
 	PackageFuncs map[string]string
+
+	Args map[string]interface{}
 }

@@ -1,0 +1,45 @@
+package {{.PackageName}}
+
+import (
+	"github.com/dop251/goja"
+	"github.com/dop251/goja_nodejs/require"
+)
+
+import (
+	{{- range $subModule := .Args.SubModules}}
+	"{{$subModule.PackagePath}}"
+	{{- end}}
+)
+
+type {{.PackageName}} struct {
+	{{- range $subModule := .Args.SubModules}}
+	{{$subModule.PackageName}} *goja.Object
+	{{- end }}
+}
+
+func init() {
+	require.RegisterNativeModule("{{.PackageName}}", Require)
+}
+
+func Require(runtime *goja.Runtime, module *goja.Object) {
+
+	pkg := &{{.PackageName}}{
+		{{- range $subModule := .Args.SubModules }}
+		{{$subModule.PackageName}} : require.Require(runtime, "{{$subModule.PackageName}}").(*goja.Object),
+		{{- end}}
+	}
+
+	o := module.Get("exports").(*goja.Object)
+
+	{{range $subModule := .Args.SubModules }}
+	o.Set("{{$subModule.PackageName}}", pkg.{{$subModule.PackageName}})
+	{{- end }}
+}
+
+func Enable(runtime *goja.Runtime) {
+	{{- range $subModule := .Args.SubModules }}
+	{{$subModule.PackageName}}.Enable(runtime)
+	{{- end }}
+
+	runtime.Set("{{.PackageName}}", require.Require(runtime, "{{.PackageName}}"))
+}

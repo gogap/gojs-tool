@@ -2,12 +2,25 @@ package gojs
 
 import (
 	"bytes"
+	"fmt"
 	"go/format"
 	"text/template"
 
 	"github.com/gogap/gocoder"
 	"github.com/gogap/gojs-tool/gojs/templates"
 )
+
+type GenerateOptions struct {
+	TemplateName string
+	PackagePath  string
+	PackageAlias string
+	GoPath       string
+	ProjectPath  string
+
+	TemplateVars *TemplateVars
+
+	Args interface{}
+}
 
 func Parser(pkgPath string, gopath string) (vars *TemplateVars, err error) {
 	pkg, err := gocoder.NewGoPackage(pkgPath,
@@ -74,36 +87,34 @@ func Parser(pkgPath string, gopath string) (vars *TemplateVars, err error) {
 	return
 }
 
-func GenerateCode(tmplName, pkgPath, pkgAlias, gopath string) (code string, err error) {
-	vars, err := Parser(pkgPath, gopath)
+func GenerateCode(options GenerateOptions) (code string, err error) {
+
+	tmplBytes, err := templates.Asset(options.TemplateName + ".tmpl")
 	if err != nil {
 		return
 	}
 
-	tmplBytes, err := templates.Asset(tmplName + ".tmpl")
-	if err != nil {
-		return
-	}
-
-	tmpl, err := template.New("Goja").Funcs(templateFuncs()).Parse(string(tmplBytes))
+	tmpl, err := template.New(options.TemplateName).Funcs(templateFuncs()).Parse(string(tmplBytes))
 	if err != nil {
 		return
 	}
 
 	buf := bytes.NewBuffer(nil)
-	err = tmpl.Execute(buf, vars)
+
+	err = tmpl.Execute(buf, options.TemplateVars)
 
 	if err != nil {
 		return
 	}
 
-	if len(pkgAlias) > 0 {
-		vars.PackageName = pkgAlias
+	if len(options.PackageAlias) > 0 {
+		options.TemplateVars.PackageName = options.PackageAlias
 	}
 
 	codeBytes, err := format.Source(buf.Bytes())
 
 	if err != nil {
+		fmt.Println(buf.String())
 		return
 	}
 

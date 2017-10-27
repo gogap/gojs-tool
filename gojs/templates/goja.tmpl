@@ -1,7 +1,8 @@
 package {{.PackageName}}
 
+{{$pkgName:=(printf "original_%s" .PackageName) -}}
 import (
-	"{{.PackagePath}}"
+	{{$pkgName}} "{{.PackagePath}}"
 )
 
 import (
@@ -16,7 +17,6 @@ var (
 func init() {
 	module.Set(
 		gojs.Objects{
-			{{- $pkgName:=.PackageName -}}
 			{{- $pkgFuncs:=.PackageFuncs}}
 			// Functions
 			{{- range $objName, $objDefine := .PackageFuncs}}
