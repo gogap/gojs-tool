@@ -17,12 +17,29 @@ func init() {
 	module.Set(
 		gojs.Objects{
 			{{- $pkgName:=.PackageName -}}
-			{{range $objName, $objDefine := .PackageFuncs}}
-			"{{$objName}}": {{$pkgName}}.{{$objDefine}},
-			{{- end -}}
-			{{range $objName, $objDefine := .PackageVars}}
+			{{- $pkgFuncs:=.PackageFuncs}}
+			// Functions
+			{{- range $objName, $objDefine := .PackageFuncs}}
 			"{{$objName}}": {{$pkgName}}.{{$objDefine}},
 			{{- end}}
+
+			// Var and consts
+			{{- range $objName, $objDefine := .PackageVars}}
+			"{{$objName}}": {{$pkgName}}.{{$objDefine}},
+			{{- end}}
+
+			// Types (value type)
+			{{- range $objName, $objDefine := .PackageTypes}}
+			"{{$objName}}": {{printf "func() %s.%s { return %s.%s{} }" $pkgName $objDefine $pkgName $objDefine}},
+			{{- end}}
+
+			// Types (pointer type)
+			{{range $objName, $objDefine := .PackageTypes}}
+			{{- $newObjName := printf "%s%s" "New" $objName -}}
+			{{- if not (exist $pkgFuncs $newObjName) -}}
+			"{{$newObjName}}": {{printf "func() *%s.%s { return &%s.%s{} }" $pkgName $objDefine $pkgName $objDefine}},
+			{{end -}}
+			{{- end -}}
 			},
 		).Register()
 }

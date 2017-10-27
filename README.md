@@ -30,7 +30,9 @@ modules
 
 ```
 
-`logrus.go`
+#### Auto generated code
+
+`modules/github.com/sirupsen/logrus/logrus.go`
 
 ```go
 package logrus
@@ -51,15 +53,45 @@ var (
 func init() {
 	module.Set(
 		gojs.Objects{
+			// Functions
 			"AddHook":             logrus.AddHook,
 			"Debug":               logrus.Debug,
 			"Debugf":              logrus.Debugf,
 			"Debugln":             logrus.Debugln,
 			"Error":               logrus.Error,
 			"Errorf":              logrus.Errorf,
-			// ...
-			// ... more code ...
-			// ...
+			"Errorln":             logrus.Errorln,
+			"Exit":                logrus.Exit,
+			"Fatal":               logrus.Fatal,
+			"Fatalf":              logrus.Fatalf,
+			//..........more funcs..........		
+
+
+			// Var and consts
+			"AllLevels":     logrus.AllLevels,
+			"DebugLevel":    logrus.DebugLevel,
+			"ErrorKey":      logrus.ErrorKey,
+			"ErrorLevel":    logrus.ErrorLevel,
+			"FatalLevel":    logrus.FatalLevel,
+			"FieldKeyLevel": logrus.FieldKeyLevel,
+			"FieldKeyMsg":   logrus.FieldKeyMsg,
+			"FieldKeyTime":  logrus.FieldKeyTime,
+			"InfoLevel":     logrus.InfoLevel,
+			"PanicLevel":    logrus.PanicLevel,
+			"WarnLevel":     logrus.WarnLevel,
+
+			// Types (value type)
+			"Entry":         func() logrus.Entry { return logrus.Entry{} },
+			"JSONFormatter": func() logrus.JSONFormatter { return logrus.JSONFormatter{} },
+			"Logger":        func() logrus.Logger { return logrus.Logger{} },
+			"MutexWrap":     func() logrus.MutexWrap { return logrus.MutexWrap{} },
+			"TextFormatter": func() logrus.TextFormatter { return logrus.TextFormatter{} },
+
+			// Types (pointer type)
+			"NewJSONFormatter": func() *logrus.JSONFormatter { return &logrus.JSONFormatter{} },
+			"NewLogger":        func() *logrus.Logger { return &logrus.Logger{} },
+			"NewMutexWrap":     func() *logrus.MutexWrap { return &logrus.MutexWrap{} },
+			"NewTextFormatter": func() *logrus.TextFormatter { return &logrus.TextFormatter{} },
 		},
 	).Register()
 }
@@ -67,6 +99,7 @@ func init() {
 func Enable(runtime *goja.Runtime) {
 	module.Enable(runtime)
 }
+
 ```
 
 
@@ -92,14 +125,28 @@ func main() {
 	registry.Enable(runtime)
 	logrus.Enable(runtime)
 
-	runtime.RunString(`
+	_, err := runtime.RunString(`
+		var entryA = logrus.NewEntry()
+		var entryB = logrus.Entry()
+
+		logrus.Println("entryA:",entryA)
+		logrus.Println("entryB:",entryB)
+
     	logrus.WithField("Hello", "World").Println("I am gojs")
     `)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
+
 ```
 
 
 ```bash
 example> go run main.go
-INFO[0000] I am gojs      Hello=World
+INFO[0000] entryA: &{<nil> map[] 0001-01-01 00:00:00 +0000 UTC panic  <nil>}
+INFO[0000] entryB: {<nil> map[] 0001-01-01 00:00:00 +0000 UTC panic  <nil>}
+INFO[0000] I am gojs                                     Hello=World
 ```

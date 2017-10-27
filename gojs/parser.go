@@ -63,7 +63,10 @@ func Parser(pkgPath string, gopath string) (vars *TemplateVars, err error) {
 			continue
 		}
 
-		tmplVars.PackageTypes[goType.Name()] = goType.Name()
+		if goType.IsStruct() {
+			tmplVars.PackageTypes[goType.Name()] = goType.Name()
+		}
+
 	}
 
 	vars = tmplVars
@@ -82,7 +85,7 @@ func GenerateCode(tmplName, pkgPath, pkgAlias, gopath string) (code string, err 
 		return
 	}
 
-	tmpl, err := template.New("Goja").Parse(string(tmplBytes))
+	tmpl, err := template.New("Goja").Funcs(templateFuncs()).Parse(string(tmplBytes))
 	if err != nil {
 		return
 	}
@@ -119,4 +122,13 @@ func isExported(v string) bool {
 	}
 
 	return false
+}
+
+func templateFuncs() map[string]interface{} {
+	return map[string]interface{}{
+		"exist": func(v map[string]string, key string) bool {
+			_, exist := v[key]
+			return exist
+		},
+	}
 }
