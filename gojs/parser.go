@@ -2,8 +2,8 @@ package gojs
 
 import (
 	"bytes"
-	"fmt"
 	"go/format"
+	"strings"
 	"text/template"
 
 	"github.com/gogap/gocoder"
@@ -114,7 +114,6 @@ func GenerateCode(options GenerateOptions) (code string, err error) {
 	codeBytes, err := format.Source(buf.Bytes())
 
 	if err != nil {
-		fmt.Println(buf.String())
 		return
 	}
 
@@ -140,6 +139,13 @@ func templateFuncs() map[string]interface{} {
 		"exist": func(v map[string]string, key string) bool {
 			_, exist := v[key]
 			return exist
+		},
+		"toTitle": func(v string) string {
+			if len(v) == 0 {
+				return v
+			}
+
+			return strings.ToUpper(string(v[0])) + v[1:]
 		},
 	}
 }

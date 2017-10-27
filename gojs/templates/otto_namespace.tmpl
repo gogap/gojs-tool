@@ -1,0 +1,41 @@
+package {{.PackageName}}
+
+import (
+	"github.com/robertkrimen/otto"
+)
+
+import (
+	{{- range $subModule := .Args.SubModules}}
+	"{{$subModule.PackagePath}}"
+	{{- end}}
+)
+
+func Enable(runtime *otto.Otto) {
+	{{- range $subModule := .Args.SubModules }}
+	{{$subModule.PackageName}}.Enable(runtime)
+	{{- end }}
+
+	var err error
+	var obj otto.Value
+	var goValue interface{}
+
+	module := make(map[string]interface{})
+
+	{{- range $subModule := .Args.SubModules }}
+
+	obj, err = runtime.Get("{{$subModule.PackageName}}")
+	if err!=nil {
+		panic(err)
+	}
+
+	goValue, err = obj.Export()
+	if err!=nil {
+		panic(err)
+	}
+
+	module["{{$subModule.PackageName}}"] = goValue.(*{{$subModule.PackageName}}.{{$subModule.PackageName|toTitle}})
+
+	{{- end}}
+
+	runtime.Set("{{.PackageName}}", module)
+}
